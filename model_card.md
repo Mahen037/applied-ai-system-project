@@ -147,3 +147,55 @@ The full pipeline was evaluated on the 20 labeled posts using `pipeline.evaluate
 - **Fine-grained emotions**: Add labels like "angry", "anxious", "excited", "grateful" beyond the 4 basic moods
 - **Web interface**: Build a browser-based UI for interactive exploration
 - **Multi-annotator labeling**: Have multiple people label each post and measure inter-annotator agreement
+
+## 9. Reflection and Ethics
+
+### What are the limitations or biases in your system?
+
+The Mood Machine has several important limitations and biases:
+
+- **Cultural and linguistic bias**: The word lists are heavily skewed toward American English and Gen-Z internet culture. Slang like "fire" (positive) and "mid" (negative) are culturally specific — a user from a different background might use "fire" literally or "mid" differently. The system would misclassify these.
+- **Label bias**: With only 20 examples labeled by a single annotator (me), the system reflects my personal interpretation of mood. For instance, I labeled "It's whatever, I don't really care anymore" as neutral, but someone else might reasonably call it negative (apathetic/depressed). No inter-annotator agreement was measured.
+- **Positive word skew**: The dataset has 8 positive posts, 6 negative, 3 neutral, and 3 mixed. This imbalance means the ML model is slightly biased toward predicting positive labels.
+- **Emoji coverage bias**: Only 32 emojis are mapped. Emojis used by non-Western cultures or newer Unicode emojis are ignored entirely. This creates a blind spot for users who rely on different emoji sets.
+- **No sarcasm awareness**: The system treats all words at face value. Sarcastic positivity ("I just *love* Mondays") gets classified as positive, which is the opposite of the intended meaning.
+
+### Could your AI be misused, and how would you prevent that?
+
+Yes, mood analysis systems can be misused in several ways:
+
+1. **Surveillance and manipulation**: An employer or platform could use mood detection to monitor employees' or users' emotional states without consent, then use that data to manipulate behavior (e.g., showing certain content when someone is detected as "negative"). **Prevention**: The system should only be used with explicit informed consent. Adding a disclosure ("Your text is being analyzed for mood") would help.
+
+2. **Misclassifying mental health signals**: If deployed in a support context, misclassifying a genuine cry for help as "neutral" could delay intervention. **Prevention**: Never use this system as a sole decision-maker for mental health triage. Always include human review for sensitive contexts.
+
+3. **Discrimination**: Mood labels could be used to unfairly judge individuals — e.g., rejecting a job applicant because their writing style was classified as "negative." **Prevention**: Mood classification should never be used as a factor in high-stakes decisions (hiring, lending, academic grading).
+
+4. **Privacy violations**: Analyzing private messages without consent is a clear privacy violation. **Prevention**: Only analyze text that users explicitly submit for analysis; never scrape or intercept private communications.
+
+### What surprised you while testing your AI's reliability?
+
+Several things surprised me:
+
+1. **Confidence scores were more informative than labels.** I initially focused on getting labels right, but during testing I realized the confidence score often told a more nuanced story. A "positive" prediction at 0.40 confidence is essentially the system saying "I'm not sure but leaning positive" — which is often the most honest and useful answer.
+
+2. **The ensemble disagreed less often than expected.** I assumed the rule-based and ML models would frequently disagree, creating interesting ensemble dynamics. In practice, they agreed on ~85% of inputs. The disagreements were almost always on ambiguous or sarcastic texts — exactly the cases where humans would disagree too.
+
+3. **Edge cases didn't crash the system.** I was pleasantly surprised that inputs like empty strings (""), pure emojis ("😊😊😊"), and nonsense ("@#$%^&*()") all processed without errors. The preprocessing pipeline's design with early returns and default values accidentally created robust guardrails.
+
+4. **RAG retrieval quality varied more than expected.** For common emotions ("I love this"), the retrieved examples were highly relevant. But for unusual phrasings ("I'm not sad, I'm just tired of everything"), the TF-IDF embeddings retrieved examples that shared surface words ("sad", "tired") rather than similar sentiment structure. Deeper semantic embeddings would help here.
+
+## 10. AI Collaboration
+
+### Describing my collaboration with AI during this project
+
+I used an AI coding assistant extensively throughout this project for code generation, architecture planning, and debugging. Here is an honest assessment:
+
+**One instance where AI gave a helpful suggestion:**
+When I was designing the RAG system, the AI suggested using TF-IDF embeddings as a lightweight alternative to sentence-transformers for building the vector store. This was genuinely helpful because it eliminated the need for large model downloads (sentence-transformers requires ~400MB+ of pretrained weights), made the project installable with just `pip install scikit-learn`, and kept the system fast enough to run without a GPU. The trade-off (less semantic understanding) was clearly documented, and for a 20-document dataset, the difference was minimal. This suggestion directly shaped the system's "runs anywhere" design philosophy.
+
+**One instance where AI's suggestion was flawed or incorrect:**
+The AI initially implemented the confidence scoring formula as `confidence = abs(score) / total_signals`, which produced confidence values greater than 1.0 in some cases (e.g., when a text had many weighted words like "love" with weight 2, the score could exceed the signal count). This broke the assumption that confidence should be in the [0, 1] range and caused a unit test to fail. I had to identify the issue and add proper clamping (`min(..., 1.0)`) along with a scaling function that maps to a sensible range. This taught me that AI-generated code often handles the "happy path" correctly but misses edge cases in numeric computations — exactly the kind of bug that automated testing catches.
+
+## 11. Testing Surprises Summary
+
+**72 out of 72 tests passed.** The pipeline achieved 90% accuracy (18/20) on the labeled dataset. Confidence scores averaged 0.70, accurately reflecting the inherent ambiguity in short text mood classification. The 2 failures were both cases of linguistic nuance (sarcasm, subtle neutrality) that even humans might disagree on. Adding validation rules for confidence clamping and improving the negation lookahead window were the two changes that had the biggest impact on both test pass rates and real-world accuracy.

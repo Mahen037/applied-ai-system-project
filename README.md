@@ -4,9 +4,19 @@
 
 The Mood Machine analyzes text input to determine its emotional mood (positive, negative, neutral, or mixed) using an ensemble of two classifiers — a rule-based analyzer with negation handling, weighted words, and emoji detection, plus a TF-IDF + Logistic Regression ML model. It goes beyond simple classification by using a RAG system that retrieves similar labeled examples from a vector store to generate context-aware explanations for each prediction, complete with confidence scoring and detailed reasoning.
 
+> **Base Project:** This project extends the "Mood Machine" starter lab, which provided a skeleton rule-based mood classifier with TODOs. The original starter included a basic `MoodAnalyzer` class with unimplemented `score_text()` and `predict_label()` methods, a 6-post dataset, and a simple `main.py` entry point. Everything beyond filling in those TODOs — the enhanced preprocessing, negation handling, weighted words, emoji scoring, the ML classifier, the RAG explainer, the unified pipeline, the 72-test suite, confidence scoring, and structured logging — was built as part of this project.
+
+## 🎬 Demo Walkthrough
+
+> **📹 Loom Video:** [Click here to watch the end-to-end demo walkthrough](https://www.loom.com/share/d9bdbc6ec62847739169a3f9cbefa621)
+>
+> The video demonstrates: ✅ End-to-end system run with 3 inputs · ✅ RAG retrieval + explanation behavior · ✅ Confidence scoring and evaluation metrics · ✅ Clear outputs for each case
+
 ---
 
 ## 📐 Architecture Overview
+
+![System Architecture Diagram](assets/system_architecture.png)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -107,7 +117,9 @@ The Mood Machine analyzes text input to determine its emotional mood (positive, 
 ├── rag_explainer.py           # RAG system: vector store + retrieval + explanation generation
 ├── pipeline.py                # Unified pipeline orchestrating all components
 ├── main.py                    # CLI entry point with logging, evaluation, demo, interactive modes
-├── model_card.md              # Completed model card with findings
+├── model_card.md              # Completed model card with findings and reflections
+├── assets/
+│   └── system_architecture.png # System architecture diagram
 ├── tests/
 │   ├── __init__.py
 │   ├── test_mood_analyzer.py  # 26 tests for rule-based analyzer
@@ -340,5 +352,29 @@ tests/test_pipeline.py       — 23 passed  (init, analysis, batch, evaluation, 
 - Use sentence-transformers for better RAG embeddings
 - Build a web UI for interactive exploration
 - Expand the dataset to 100+ examples covering more emotion types
+
+---
+
+## 🎓 Portfolio & Presentation
+
+### GitHub Repository
+
+🔗 **[github.com/Mahen037/applied-ai-system-project](https://github.com/Mahen037/applied-ai-system-project)**
+
+### Video Walkthrough
+
+📹 **[Loom Walkthrough — End-to-End Demo](https://www.loom.com/share/d9bdbc6ec62847739169a3f9cbefa621)**
+
+The walkthrough covers:
+- ✅ End-to-end system run with 3 different inputs (positive, negative, mixed)
+- ✅ RAG retrieval and context-aware explanation generation
+- ✅ Confidence scoring and ensemble behavior
+- ✅ Evaluation results (90% accuracy, 72/72 tests)
+
+### Portfolio Reflection
+
+> **What this project says about me as an AI engineer:**
+>
+> This project demonstrates that I can design, build, and evaluate a complete AI system from end to end — not just write code that runs, but build something that is testable, explainable, and honest about its limitations. I integrated multiple AI techniques (rule-based NLP, machine learning, and RAG) into a unified pipeline with confidence scoring and structured logging, showing that I understand how to combine different approaches and make them work together. The 72 automated tests and the detailed model card show that I care about reliability and documentation, not just getting a demo to work. Most importantly, the reflection sections show that I think critically about bias, misuse, and the gap between what AI systems promise and what they actually deliver. As an AI practitioner, I believe that building trustworthy systems — ones that tell you when they're uncertain — matters more than chasing the highest accuracy number.
 
 ---
