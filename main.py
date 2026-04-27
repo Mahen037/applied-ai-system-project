@@ -1,94 +1,202 @@
 """
-Entry point for the Mood Machine rule based mood analyzer.
+Entry point for the Mood Machine AI System.
+
+This is the main CLI interface that runs the full pipeline:
+  - Rule-based mood analysis with negation and emoji handling
+  - ML classification with TF-IDF + Logistic Regression
+  - RAG-powered contextual explanations
+  - Confidence scoring and ensemble predictions
+  - Comprehensive logging
+
+Usage:
+    python main.py              # Run full demo + interactive mode
+    python main.py --evaluate   # Run evaluation only
+    python main.py --interactive # Interactive mode only
 """
 
-from typing import List
+import argparse
+import logging
+import os
+import sys
+from datetime import datetime
 
-from mood_analyzer import MoodAnalyzer
+from pipeline import MoodPipeline
 from dataset import SAMPLE_POSTS, TRUE_LABELS
 
 
-def evaluate_rule_based(posts: List[str], labels: List[str]) -> float:
+# ---------------------------------------------------------------------
+# Logging setup
+# ---------------------------------------------------------------------
+
+def setup_logging(log_dir: str = "logs") -> None:
     """
-    Evaluate the rule based MoodAnalyzer on a labeled dataset.
+    Configure logging to both console and file.
 
-    Prints each text with its predicted label and the true label,
-    then returns the overall accuracy as a float between 0 and 1.
+    Logs are saved to logs/mood_machine_YYYYMMDD_HHMMSS.log
     """
-    analyzer = MoodAnalyzer()
-    correct = 0
-    total = len(posts)
+    os.makedirs(log_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = os.path.join(log_dir, f"mood_machine_{timestamp}.log")
 
-    print("=== Rule Based Evaluation on SAMPLE_POSTS ===")
-    for text, true_label in zip(posts, labels):
-        predicted_label = analyzer.predict_label(text)
-        is_correct = predicted_label == true_label
-        if is_correct:
-            correct += 1
+    # Root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
 
-        # If you implement explain(), you can uncomment these lines:
-        # reason = analyzer.explain(text)
-        # print(f'"{text}" -> predicted={predicted_label}, true={true_label} ({reason})')
+    # File handler: detailed logs
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+    file_format = logging.Formatter(
+        "%(asctime)s | %(name)-20s | %(levelname)-7s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    file_handler.setFormatter(file_format)
+    root_logger.addHandler(file_handler)
 
-        print(f'"{text}" -> predicted={predicted_label}, true={true_label}')
+    # Console handler: info and above
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.WARNING)
+    console_format = logging.Formatter("%(levelname)s: %(message)s")
+    console_handler.setFormatter(console_format)
+    root_logger.addHandler(console_handler)
 
-    if total == 0:
-        print("\nNo labeled examples to evaluate.")
-        return 0.0
-
-    accuracy = correct / total
-    print(f"\nRule based accuracy on SAMPLE_POSTS: {accuracy:.2f}")
-    return accuracy
-
-
-def run_batch_demo() -> None:
-    """
-    Run the MoodAnalyzer on the sample posts and print predictions only.
-
-    This is a quick way to see how your rules behave without comparing
-    to the true labels.
-    """
-    analyzer = MoodAnalyzer()
-    print("\n=== Batch Demo on SAMPLE_POSTS (rule based) ===")
-    for text in SAMPLE_POSTS:
-        label = analyzer.predict_label(text)
-        # If explain() is implemented, show a short explanation.
-        # reason = analyzer.explain(text)
-        # print(f'"{text}" -> {label} ({reason})')
-        print(f'"{text}" -> {label}')
+    logging.info("Logging initialized. Log file: %s", log_file)
 
 
-def run_interactive_loop() -> None:
-    """
-    Let the user type their own sentences and see the predicted mood.
+# ---------------------------------------------------------------------
+# Demo functions
+# ---------------------------------------------------------------------
 
-    Type 'quit' or press Enter on an empty line to exit.
-    """
-    analyzer = MoodAnalyzer()
-    print("\n=== Interactive Mood Machine (rule based) ===")
-    print("Type a sentence to analyze its mood.")
+def run_evaluation(pipeline: MoodPipeline) -> dict:
+    """Evaluate the pipeline on the labeled dataset."""
+    print("\n" + "=" * 60)
+    print("  📊 PIPELINE EVALUATION ON DATASET")
+    print("=" * 60)
+
+    evaluation = pipeline.evaluate(SAMPLE_POSTS, TRUE_LABELS)
+
+    print(f"\nDataset: {evaluation['total']} posts")
+    print(f"Accuracy: {evaluation['accuracy']:.0%} ({evaluation['correct']}/{evaluation['total']})")
+    print(f"Average Confidence: {evaluation['average_confidence']:.2f}")
+    print()
+
+    for r in evaluation["results"]:
+        marker = "✅" if r["correct"] else "❌"
+        print(f'  {marker} "{r["text"]}"')
+        print(f'     Predicted: {r["predicted_label"]} | True: {r["true_label"]} | Confidence: {r["confidence"]:.2f}')
+        print()
+
+    return evaluation
+
+
+def run_demo(pipeline: MoodPipeline) -> None:
+    """Run a few demo analyses with full explanations."""
+    print("\n" + "=" * 60)
+    print("  🎭 MOOD MACHINE DEMO")
+    print("=" * 60)
+
+    demo_texts = [
+        "I love this class so much!",
+        "Today was a terrible, awful, no-good day",
+        "Feeling tired but kind of hopeful about tomorrow",
+        "Bruh this is the worst exam I've ever taken 💀",
+        "Can't stop smiling today 😊 everything went perfect",
+    ]
+
+    for text in demo_texts:
+        result = pipeline.analyze(text)
+        print(f'\n{"─" * 50}')
+        print(f'Input: "{text}"')
+        print(f'{"─" * 50}')
+        print()
+        print(result["explanation"])
+
+        if result.get("ml"):
+            print(f"\n  🤖 ML model says: {result['ml']['label']} "
+                  f"(confidence: {result['ml']['confidence']:.2f})")
+
+        print()
+
+
+def run_interactive(pipeline: MoodPipeline) -> None:
+    """Interactive mode: type text and get mood analysis."""
+    print("\n" + "=" * 60)
+    print("  🎤 INTERACTIVE MOOD MACHINE")
+    print("=" * 60)
+    print("\nType a sentence to analyze its mood.")
     print("Type 'quit' or press Enter on an empty line to exit.\n")
 
     while True:
-        user_input = input("You: ").strip()
-        if user_input == "" or user_input.lower() == "quit":
-            print("Goodbye from the Mood Machine.")
+        try:
+            user_input = input("You: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nGoodbye!")
             break
 
-        label = analyzer.predict_label(user_input)
-        # If explain() is implemented, you can include an explanation:
-        # reason = analyzer.explain(user_input)
-        # print(f"Model: {label} ({reason})")
-        print(f"Model: {label}")
+        if user_input == "" or user_input.lower() == "quit":
+            print("Goodbye from the Mood Machine! 👋")
+            break
+
+        result = pipeline.analyze(user_input)
+        print()
+        print(result["explanation"])
+
+        if result.get("ml"):
+            print(f"\n  🤖 ML model: {result['ml']['label']} "
+                  f"(confidence: {result['ml']['confidence']:.2f})")
+        print()
+
+
+# ---------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------
+
+def main() -> None:
+    """Main entry point."""
+    parser = argparse.ArgumentParser(
+        description="Mood Machine: AI-powered mood analysis system"
+    )
+    parser.add_argument(
+        "--evaluate", action="store_true",
+        help="Run evaluation on the dataset only"
+    )
+    parser.add_argument(
+        "--interactive", action="store_true",
+        help="Run interactive mode only"
+    )
+    parser.add_argument(
+        "--no-rag", action="store_true",
+        help="Disable RAG explanations"
+    )
+    parser.add_argument(
+        "--no-ml", action="store_true",
+        help="Disable ML classifier"
+    )
+    args = parser.parse_args()
+
+    # Setup logging
+    setup_logging()
+
+    print("🎭 Mood Machine — AI-Powered Mood Analysis System")
+    print("=" * 50)
+    print("Initializing pipeline...")
+
+    # Initialize pipeline
+    pipeline = MoodPipeline(
+        use_rag=not args.no_rag,
+        use_ml=not args.no_ml,
+    )
+    print("✅ Pipeline ready!\n")
+
+    if args.evaluate:
+        run_evaluation(pipeline)
+    elif args.interactive:
+        run_interactive(pipeline)
+    else:
+        # Full demo: evaluation + demo + interactive
+        run_evaluation(pipeline)
+        run_demo(pipeline)
+        run_interactive(pipeline)
 
 
 if __name__ == "__main__":
-    evaluate_rule_based(SAMPLE_POSTS, TRUE_LABELS)
-
-    run_batch_demo()
-
-    run_interactive_loop()
-
-    print("\nTip: After you explore the rule based model here,")
-    print("run `python ml_experiments.py` to try a simple ML based model")
-    print("trained on the same SAMPLE_POSTS and TRUE_LABELS.")
+    main()
