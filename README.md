@@ -1,4 +1,4 @@
-# 🎭 Mood Machine — AI-Powered Mood Analysis System
+# 🎭 Mood Machine - AI-Powered Mood Analysis System
 
 **An intelligent text mood classifier that combines rule-based analysis, machine learning, and Retrieval-Augmented Generation (RAG) to predict and explain the emotional tone of short text messages.**
 
@@ -365,16 +365,10 @@ tests/test_pipeline.py       — 23 passed  (init, analysis, batch, evaluation, 
 
 📹 **[Loom Walkthrough — End-to-End Demo](https://www.loom.com/share/d9bdbc6ec62847739169a3f9cbefa621)**
 
-The walkthrough covers:
-- ✅ End-to-end system run with 3 different inputs (positive, negative, mixed)
-- ✅ RAG retrieval and context-aware explanation generation
-- ✅ Confidence scoring and ensemble behavior
-- ✅ Evaluation results (90% accuracy, 72/72 tests)
-
 ### Portfolio Reflection
 
 > **What this project says about me as an AI engineer:**
 >
-> This project demonstrates that I can design, build, and evaluate a complete AI system from end to end — not just write code that runs, but build something that is testable, explainable, and honest about its limitations. I integrated multiple AI techniques (rule-based NLP, machine learning, and RAG) into a unified pipeline with confidence scoring and structured logging, showing that I understand how to combine different approaches and make them work together. The 72 automated tests and the detailed model card show that I care about reliability and documentation, not just getting a demo to work. Most importantly, the reflection sections show that I think critically about bias, misuse, and the gap between what AI systems promise and what they actually deliver. As an AI practitioner, I believe that building trustworthy systems — ones that tell you when they're uncertain — matters more than chasing the highest accuracy number.
+> This project demonstrates that I can design, build, and evaluate a complete AI system from end to end, not just write code that runs, but build something that is testable, explainable, and honest about its limitations. I integrated multiple AI techniques (rule-based NLP, machine learning, and RAG) into a unified pipeline with confidence scoring and structured logging, showing that I understand how to combine different approaches and make them work together. The 72 automated tests and the detailed model card show that I care about reliability and documentation, not just getting a demo to work. Most importantly, the reflection sections show that I think critically about bias, misuse, and the gap between what AI systems promise and what they actually deliver. As an AI practitioner, I believe that building trustworthy systems that tell you when they're uncertain matter more than chasing the highest accuracy number.
 
 ---
